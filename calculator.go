@@ -64,7 +64,7 @@ func calculate(input string) string {
 		if result < 1 {
 			panic("В римской системе нет отрицательных чисел.")
 		}
-		return ArabicToRoman[result]
+		return toRoman(result)
 	}
 	return strconv.Itoa(result)
 }
@@ -89,8 +89,38 @@ func applyOperation(num1, num2 int, operator string) int {
 	case "*":
 		return num1 * num2
 	case "/":
+		if num2 == 0 {
+			panic("Деление на ноль")
+		}
 		return num1 / num2
 	default:
-		panic("Неправильный ввод.")
+		panic("Неправильный оператор")
 	}
+}
+
+func toRoman(num int) string {
+	var roman strings.Builder
+
+	romanValues := []struct {
+		Value  int
+		Symbol string
+	}{
+		{100, "C"},
+		{90, "XC"},
+		{50, "L"},
+		{40, "XL"},
+		{10, "X"},
+		{9, "IX"},
+		{5, "V"},
+		{4, "IV"},
+		{1, "I"},
+	}
+
+	for _, rv := range romanValues {
+		for num >= rv.Value {
+			roman.WriteString(rv.Symbol)
+			num -= rv.Value
+		}
+	}
+	return roman.String()
 }
