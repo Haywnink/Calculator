@@ -4,123 +4,57 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
 
-var RomanToArabic = map[string]int{
-	"I":    1,
-	"II":   2,
-	"III":  3,
-	"IV":   4,
-	"V":    5,
-	"VI":   6,
-	"VII":  7,
-	"VIII": 8,
-	"IX":   9,
-	"X":    10,
-}
-
-var ArabicToRoman = map[int]string{
-	1:  "I",
-	2:  "II",
-	3:  "III",
-	4:  "IV",
-	5:  "V",
-	6:  "VI",
-	7:  "VII",
-	8:  "VIII",
-	9:  "IX",
-	10: "X",
-}
-
 func main() {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Println("Введите выражение (например, 1 + 1 или X - V):")
-
+	fmt.Print("Введите выражение: ")
 	input, _ := reader.ReadString('\n')
 	input = strings.TrimSpace(input)
 
-	result := calculate(input)
-	fmt.Println("Результат:", result)
-}
+	re := regexp.MustCompile(`^\"(.+?)\"\s*([\+\-\*\/])\s*(\".*\"|\d+)$`)
+	matches := re.FindStringSubmatch(input)
 
-func calculate(input string) string {
-	parts := strings.Fields(input)
-	if len(parts) != 3 {
-		panic("Неправильный формат ввода.")
+	if len(matches) != 4 {
+		panic("Неверный формат ввода")
 	}
 
-	num1, isRoman1 := parseNumber(parts[0])
-	num2, isRoman2 := parseNumber(parts[2])
+	str1 := matches[1]
+	op := matches[2]
+	str2 := strings.Trim(matches[3], `"`)
 
-	if isRoman1 != isRoman2 {
-		panic("Нельзя смешивать римские и арабские числа.")
-	}
+	var num int
+	var err error
 
-	result := applyOperation(num1, num2, parts[1])
-
-	if isRoman1 {
-		if result < 1 {
-			panic("В римской системе нет отрицательных чисел.")
+	if op == "*" || op == "/" {
+		num, err = strconv.Atoi(str2)
+		if err != nil || num < 1 || num > 10 {
+			panic("Неверное число")
 		}
-		return toRoman(result)
 	}
-	return strconv.Itoa(result)
-}
 
-func parseNumber(s string) (int, bool) {
-	if value, isRoman := RomanToArabic[s]; isRoman {
-		return value, true
-	}
-	num, err := strconv.Atoi(s)
-	if err != nil || num < 1 || num > 10 {
-		panic("Число должно быть от 1 до 10.")
-	}
-	return num, false
-}
-
-func applyOperation(num1, num2 int, operator string) int {
-	switch operator {
+	var result string
+	switch op {
 	case "+":
-		return num1 + num2
+		result = str1 + str2
 	case "-":
-		return num1 - num2
+		if strings.Contains(str1, str2) {
+			result = strings.Replace(str1, str2, "", 1)
+		} else {
+			result = str1
+		}
 	case "*":
-		return num1 * num2
+		result = strings.Repeat(str1, num)
 	case "/":
-		if num2 == 0 {
-			panic("Деление на ноль")
-		}
-		return num1 / num2
-	default:
-		panic("Неправильный оператор")
-	}
-}
-
-func toRoman(num int) string {
-	var roman strings.Builder
-
-	romanValues := []struct {
-		Value  int
-		Symbol string
-	}{
-		{100, "C"},
-		{90, "XC"},
-		{50, "L"},
-		{40, "XL"},
-		{10, "X"},
-		{9, "IX"},
-		{5, "V"},
-		{4, "IV"},
-		{1, "I"},
+		result = str1[:len(str1)/num]
 	}
 
-	for _, rv := range romanValues {
-		for num >= rv.Value {
-			roman.WriteString(rv.Symbol)
-			num -= rv.Value
-		}
+	if len(result) > 40 {
+		result = result[:40] + "..."
 	}
-	return roman.String()
+
+	fmt.Printf("\"%s\"\n", result)
 }
