@@ -26,6 +26,10 @@ func main() {
 	op := matches[2]
 	str2 := strings.Trim(matches[3], `"`)
 
+	if len(str1) > 10 || (op == "+" && len(str2) > 10) {
+		panic("Длина строки не должна превышать 10 символов")
+	}
+
 	var num int
 	var err error
 
@@ -37,6 +41,7 @@ func main() {
 	}
 
 	var result string
+
 	switch op {
 	case "+":
 		result = str1 + str2
